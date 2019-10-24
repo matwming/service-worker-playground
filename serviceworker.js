@@ -8,7 +8,11 @@ addEventListener("fetch", fetchEvent => {
     return responseFromFetch;
    })
    .catch(error => {
-    return new Response("something is wrong");
+    return new Response("<h1>Oops</h1><p>some thing went wrong</p>", {
+     headers: {
+      "Content-type": "text/html; charset=utf-8"
+     }
+    });
    })
  );
  fetchEvent.respondWith(new Response("Hello world"));
