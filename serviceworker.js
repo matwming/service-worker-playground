@@ -1,38 +1,47 @@
-const staticCacheName='statisfiles';
+const version = "v0.04";
+const staticCacheName = version + "statisfiles";
 
 addEventListener("fetch", fetchEvent => {
  //console.log("service worker is listening to fetch events", fetchEvent);
  //console.log("fetch requests", fetchEvent.request);
  const request = fetchEvent.request;
  fetchEvent.respondWith(
-   catches.match(request).then(responseFromCache=>{
-     
-   }),
-  fetch(request)
-   .then(responseFromFetch => {
-    return responseFromFetch;
-   })
-   .catch(error => {
-    return new Response("<h1>Oops</h1><p>some thing went wrong</p>", {
-     headers: {
-      "Content-type": "text/html; charset=utf-8"
-     }
-    });
-   })
+  caches.match(request).then(responseFromCache => {
+   if (responseFromCache) {
+    return responseFromCache;
+   }
+   return fetch(request).catch(error => {
+    return caches.match("/offline.html");
+   });
+  })
  );
- fetchEvent.respondWith(new Response("Hello world"));
 });
 
-addEventListener("install", (installEvent) => {
+addEventListener("install", installEvent => {
  console.log("service worker is installing");
+ skipWaiting();
  installEvent.waitUntil(
-   caches.open(staticCacheName).then(
-     staticCache=>{
-      return staticCache.addAll(['./styles.css'])
-     }
-   )
- )
+  caches.open(staticCacheName).then(staticCache => {
+   return staticCache.addAll(["/styles.css", "/offline.html"]);
+  })
+ );
 });
-addEventListener("activate", () => {
+addEventListener("activate", activateEvent => {
  console.log("service worker is activated");
+ activateEvent.waitUntil(
+  caches
+   .keys()
+   .then(cacheNames => {
+    return Promise.all(
+     cacheNames.map(cacheName => {
+      if (cacheName !== staticCacheName) {
+       return caches.delete(cacheName);
+      }
+     })
+    );
+   })
+   .then(() => {
+    return clients.claim();
+   })
+ );
 });
