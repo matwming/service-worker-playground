@@ -1,8 +1,13 @@
+const staticCacheName='statisfiles';
+
 addEventListener("fetch", fetchEvent => {
  //console.log("service worker is listening to fetch events", fetchEvent);
  //console.log("fetch requests", fetchEvent.request);
  const request = fetchEvent.request;
  fetchEvent.respondWith(
+   catches.match(request).then(responseFromCache=>{
+     
+   }),
   fetch(request)
    .then(responseFromFetch => {
     return responseFromFetch;
@@ -18,8 +23,15 @@ addEventListener("fetch", fetchEvent => {
  fetchEvent.respondWith(new Response("Hello world"));
 });
 
-addEventListener("install", () => {
+addEventListener("install", (installEvent) => {
  console.log("service worker is installing");
+ installEvent.waitUntil(
+   caches.open(staticCacheName).then(
+     staticCache=>{
+      return staticCache.addAll(['./styles.css'])
+     }
+   )
+ )
 });
 addEventListener("activate", () => {
  console.log("service worker is activated");
